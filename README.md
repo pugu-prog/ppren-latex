@@ -14,6 +14,8 @@ Hier liegen nur Programmdateien, **keine Schülerdaten**: Die Daten gehen nur zw
 
 Einmaliger Download etwa 21 MB, danach aus dem Browser-Cache.
 
+Das Bündel deckt genau die PPREN-Vorlagen ab (Klasse `article`, **11 pt**). Andere Grundgrößen (`size10.clo`/`size12.clo`) oder neue Pakete → Bündel mit `extract.html` neu bauen.
+
 ## Neu bauen
 
 Werkzeuge liegen lokal in `PPREN/latex-browser/werkzeug/` (nicht in diesem Repo):

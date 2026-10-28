@@ -44,20 +44,26 @@
       return new Blob([r.pdf], { type: "application/pdf" });
     },
 
-    // Kennt de Backend d'Browser-LaTeX-Aktiounen? (?version=1 → features)
-    async backendKann(webAppUrl) {
+    // Wat kann de Backend? (?version=1 → features), z.B. ["latexBrowser", "latexFeeler"]
+    async backendFeatures(webAppUrl) {
       try {
         const v = await (await fetch(webAppUrl + "?version=1")).json();
-        return this.unterstuetzt && Array.isArray(v.features) && v.features.includes("latexBrowser");
+        return Array.isArray(v.features) ? v.features : [];
       } catch (e) {
-        return false;
+        return [];
       }
+    },
+
+    // Kennt de Backend d'Browser-LaTeX-Aktiounen?
+    async backendKann(webAppUrl) {
+      return this.unterstuetzt && (await this.backendFeatures(webAppUrl)).includes("latexBrowser");
     },
 
     // Oppen LaTeX-Optraeg (Docs-PDF → LaTeX-PDF) ofschaffen. Gëtt {fertig, feeler} zréck.
     async optraegErneieren({ webAppUrl, token, onStatus }) {
       const status = onStatus || (() => {});
-      if (!(await this.backendKann(webAppUrl))) return { fertig: 0, feeler: 0 };
+      const features = this.unterstuetzt ? await this.backendFeatures(webAppUrl) : [];
+      if (!features.includes("latexBrowser")) return { fertig: 0, feeler: 0 };
       const post = async (body) => (await fetch(webAppUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -78,6 +84,11 @@
         } catch (e) {
           feeler++;
           console.warn("LaTeX-PDF", o, e);
+          // de Grond am Blat "LatexOptraeg" notéieren (Optrag bleift oppen)
+          if (features.includes("latexFeeler")) {
+            const log = String(e.log || "").split("\n").filter((z) => /^!|Error|error/.test(z)).slice(0, 8).join(" | ");
+            post({ typ: "latexFeeler", id: o.id, versioun: o.versioun, feeler: e.message + (log ? " — " + log : "") }).catch(() => {});
+          }
         }
       }
       status(`${fertig} LaTeX-PDF${fertig === 1 ? "" : "en"} erneiert${feeler ? `, ${feeler} Feeler` : ""}`);
